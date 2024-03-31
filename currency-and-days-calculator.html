@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency and Days Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1A1A1D;
+            color: #C5C6C7;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+        }
+        .card {
+            background: #4E4E50;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            margin: 20px 0;
+        }
+        .card h2 {
+            text-align: center;
+            color: #ffffff; /* changed color to white */
+            margin-bottom: 20px;
+        }
+        /* Styles for currency converter */
+        .currency-input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background-color: #444;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        input, select {
+            background-color: #555;
+            border: none;
+            color: #ddd;
+            padding: 10px;
+            font-size: 16px;
+            outline: none;
+            border-radius: 4px;
+        }
+        input[type="number"] {
+            flex-grow: 1;
+            border-right: 1px solid #666;
+        }
+        select {
+            min-width: 150px;
+            appearance: none;
+        }
+        .swap-button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .swap-button {
+            background-color: #555;
+            color: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 0;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        .swap-button:hover {
+            background-color: #666;
+        }
+        /* Styles for days calculator */
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            color: #C5C6C7;
+            margin-bottom: 5px;
+        }
+        input[type=date], input[type=button] {
+            width: calc(50% - 10px);
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 4px;
+            background: #2B2B2B;
+            color: #FFF;
+            font-size: 16px;
+        }
+        input[type=button] {
+            background: #45A29E;
+            color: #0B0C10;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        input[type=button]:hover {
+            background: #66FCF1;
+        }
+        .results-container {
+            margin-top: 20px;
+        }
+        .result, .alternative-units {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .result p, .alternative-units p {
+            margin: 0;
+        }
+        .alternative-units ul {
+            list-style-type: disc;
+            padding-left: 40px;
+            margin-top: 10px;
+        }
+        .alternative-units ul li {
+            margin-bottom: 5px;
+        }
+        /* Change color of 'Calculate Duration' */
+        #calculateDurationButton {
+            background: #398BF9; /* changed color to blue */
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="color: white;">Currency Converter</h2> <!-- changed color to white -->
+    <div class="currency-input-group">
+        <input type="number" id="fromAmount" name="fromAmount" placeholder="Amount" oninput="convertCurrency()">
+        <select id="fromCurrency" name="fromCurrency" onchange="convertCurrency()">
+            <option value="NIS">&#x1f1ee;&#x1f1f1; Israeli New Shekel</option>
+            <option value="EUR">&#x1f1ea;&#x1f1fa; Euro</option>
+            <option value="USD">&#x1f1fa;&#x1f1f8; United States Dollar</option>
+        </select>
+    </div>
+    
+    <div class="swap-button-container">
+        <button class="swap-button" onclick="swapCurrencies()" title="Swap currencies">&#x1F503;</button>
+    </div>
+
+    <div class="currency-input-group">
+        <input type="number" id="toAmount" name="toAmount" placeholder="Amount" readonly>
+        <select id="toCurrency" name="toCurrency" onchange="convertCurrency()">
+            <option value="NIS">&#x1f1ee;&#x1f1f1; Israeli New Shekel</option>
+            <option value="EUR">&#x1f1ea;&#x1f1fa; Euro</option>
+            <option value="USD">&#x1f1fa;&#x1f1f8; United States Dollar</option>
+        </select>
+    </div>
+</div>
+
+<div class="card">
+    <h2 id="calculateDurationHeader">Days Calculator</h2> <!-- changed color to blue -->
+    <div class="form-group">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate">
+    </div>
+    <div class="form-group">
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate">
+    </div>
+    <input type="button" value="Calculate Duration" onclick="calculateDuration()" id="calculateDurationButton"> <!-- changed color to blue -->
+    <div class="results-container" id="resultsContainer">
+        <!-- Results will be displayed here -->
+    </div>
+</div>
+
+<script>
+    const rates = {
+        "USD": {"USD": 1, "EUR": 0.9, "NIS": 3.3},
+        "EUR": {"USD": 1.11, "EUR": 1, "NIS": 3.66},
+        "NIS": {"USD": 0.303, "EUR": 0.273, "NIS": 1},
+    };
+
+    function convertCurrency() {
+        const fromCurrency = document.getElementById('fromCurrency').value;
+        const toCurrency = document.getElementById('toCurrency').value;
+        const fromAmount = document.getElementById('fromAmount').value;
+        const rate = rates[fromCurrency][toCurrency];
+        const toAmount = fromAmount * rate;
+        document.getElementById('toAmount').value = toAmount.toFixed(2);
+    }
+
+    function swapCurrencies() {
+        const fromCurrencySelect = document.getElementById('fromCurrency');
+        const toCurrencySelect = document.getElementById('toCurrency');
+        const fromAmountInput = document.getElementById('fromAmount');
+        const toAmountInput = document.getElementById('toAmount');
+        
+        let tempCurrency = fromCurrencySelect.value;
+        fromCurrencySelect.value = toCurrencySelect.value;
+        toCurrencySelect.value = tempCurrency;
+
+        let tempAmount = fromAmountInput.value;
+        fromAmountInput.value = toAmountInput.value;
+        toAmountInput.value = tempAmount;
+
+        if (fromAmountInput.value) {
+            convertCurrency();
+        }
+    }
+</script>
+
+<script>
+    function calculateDuration() {
+        var startDate = new Date(document.getElementById("startDate").value);
+        var endDate = new Date(document.getElementById("endDate").value);
+
+        if (startDate >= endDate) {
+            document.getElementById("resultsContainer").innerHTML = "<p>End date must be after start date.</p>";
+            return;
+        }
+
+        var timeDiff = endDate - startDate;
+        var daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+        var resultsHTML = `
+            <div class="result">
+                <p><strong>From and including:</strong> ${startDate.toLocaleDateString("en-US", options)}</p>
+                <p><strong>To, but not including:</strong> ${endDate.toLocaleDateString("en-US", options)}</p>
+                <p><strong>Result:</strong> ${daysDiff} days</p>
+                <p>It is ${daysDiff} days from the start date to the end date, but not including the end date.</p>
+                <p>Or ${Math.floor(daysDiff / 30)} months excluding the end date.</p>
+            </div>
+        `;
+
+        var seconds = daysDiff * 86400;
+        var minutes = seconds / 60;
+        var hours = minutes / 60;
+        var weeks = daysDiff / 7;
+        var months = daysDiff / 30;
+        var percentOfYear = (daysDiff / (startDate.getFullYear() % 4 === 0 ? 366 : 365)) * 100;
+
+        resultsHTML += `
+            <div class="alternative-units">
+                <p><strong>Alternative time units:</strong></p>
+                <ul>
+                    <li>${seconds.toLocaleString()} seconds</li>
+                    <li>${minutes.toLocaleString()} minutes</li>
+                    <li>${hours.toLocaleString()} hours</li>
+                    <li>${daysDiff} days</li>
+                    <li>${Math.floor(weeks)} weeks and ${daysDiff % 7} day${daysDiff % 7 === 1 ? '' : 's'}</li>
+                    <li>${Math.floor(months)} month${Math.floor(months) !== 1 ? 's' : ''}</li>
+                    <li>${percentOfYear.toFixed(2)}% of ${startDate.getFullYear()}</li>
+                </ul>
+            </div>
+        `;
+
+        document.getElementById("resultsContainer").innerHTML = resultsHTML;
+    }
+</script>
+
+</body>
+</html>
